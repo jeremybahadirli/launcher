@@ -107,7 +107,7 @@ public enum HardwareAccelerationMode
 			case Windows:
 				return HardwareAccelerationMode.DIRECTDRAW;
 			case MacOS:
-				return HardwareAccelerationMode.OPENGL;
+				return HardwareAccelerationMode.METAL;
 			case Linux:
 			default:
 				return HardwareAccelerationMode.OFF;
