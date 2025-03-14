@@ -24,31 +24,19 @@
  */
 package net.runelite.launcher;
 
-import javax.net.ssl.SSLHandshakeException;
 import sun.security.provider.certpath.AdjacencyList;
 import sun.security.provider.certpath.SunCertPathBuilderException;
-import sun.security.validator.ValidatorException;
 
 class CertPathExtractor
 {
 	static String extract(Throwable ex)
 	{
+		// IOException -> SSLHandshakeException -> ValidatorException -> SunCertPathBuilderException
 		try
 		{
-			if (ex instanceof SSLHandshakeException)
-			{
-				ex = ex.getCause();
-				if (ex instanceof ValidatorException)
-				{
-					ex = ex.getCause();
-					if (ex instanceof SunCertPathBuilderException)
-					{
-						SunCertPathBuilderException pathBuilderEx = (SunCertPathBuilderException) ex;
-						AdjacencyList adjList = pathBuilderEx.getAdjacencyList();
-						return adjList.toString();
-					}
-				}
-			}
+			SunCertPathBuilderException pathBuilderEx = (SunCertPathBuilderException) ex.getCause().getCause().getCause();
+			AdjacencyList adjList = pathBuilderEx.getAdjacencyList();
+			return adjList.toString();
 		}
 		catch (Throwable ex_)
 		{

@@ -2,6 +2,9 @@ import urllib.parse
 import urllib.request
 import json
 
+ver11 = '11.0.26+4'
+ver17 = '17.0.14+7'
+
 def fetch_jre(prefix, version_range, arch, os):
     url = 'https://api.adoptium.net/v3/assets/version/' + urllib.parse.quote(version_range) + '?'
     params = {
@@ -46,13 +49,10 @@ def fetch_microsoft_jre(prefix, version, arch, os):
     print(prefix + "CHKSUM=" + shasum)
     print(prefix + "LINK=https://aka.ms/download-jdk/microsoft-jdk-" + urlversion + "-" + os + "-" + arch + ".zip")
 
-ver11 = '11.0.21+9'
-ver17 = '17.0.9+9'
-
 fetch_jre('WIN64_', ver11, 'x64', 'windows')
 fetch_jre('WIN32_', ver11, 'x86', 'windows')
 fetch_microsoft_jre('WIN_AARCH64_', ver11, 'aarch64', 'windows')
-fetch_jre('MAC_AMD64_', ver11, 'x64', 'mac')
+fetch_jre('MAC_AMD64_', ver17, 'x64', 'mac')
 fetch_jre('MAC_AARCH64_', ver17, 'aarch64', 'mac')
 fetch_jre('LINUX_AMD64_', ver11, 'x64', 'linux')
 fetch_jre('LINUX_AARCH64_', ver11, 'aarch64', 'linux')

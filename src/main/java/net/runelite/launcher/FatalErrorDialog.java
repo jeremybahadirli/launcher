@@ -35,6 +35,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
@@ -83,11 +84,17 @@ public class FatalErrorDialog extends JDialog
 
 		UIManager.put("Button.select", DARKER_GRAY_COLOR);
 
-		try
+		try (var in = FatalErrorDialog.class.getResourceAsStream(LauncherProperties.getRuneLite128()))
 		{
-			BufferedImage logo = ImageIO.read(SplashScreen.class.getResourceAsStream("runelite_transparent.png"));
-			setIconImage(logo);
+			setIconImage(ImageIO.read(in));
+		}
+		catch (IOException e)
+		{
+		}
 
+		try (var in = FatalErrorDialog.class.getResourceAsStream(LauncherProperties.getRuneLiteSplash()))
+		{
+			BufferedImage logo = ImageIO.read(in);
 			JLabel runelite = new JLabel();
 			runelite.setIcon(new ImageIcon(logo));
 			runelite.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -210,8 +217,33 @@ public class FatalErrorDialog extends JDialog
 
 		if (err instanceof SocketException) // includes ConnectException
 		{
-			new FatalErrorDialog(formatExceptionMessage("RuneLite is unable to connect to a required server while " + action + ". " +
-				"Please check your internet connection.", err))
+			String message = "RuneLite is unable to connect to a required server while " + action + ".";
+
+			// hardcoded error message from PlainSocketImpl.c for WSAEADDRNOTAVAIL
+			if (err.getMessage().equals("connect: Address is invalid on local machine, or port is not valid on remote machine"))
+			{
+				message += " Cannot assign requested address. This error is most commonly caused by \"split tunneling\" support in VPN software." +
+					" If you are using a VPN, try turning \"split tunneling\" off.";
+			}
+			// connect() returning SOCKET_ERROR:
+			// WSAEACCES error formatted by NET_ThrowNew()
+			else if (err.getMessage().equals("Permission denied: connect"))
+			{
+				message += " Your internet access is blocked. Firewall or antivirus software may have blocked the connection.";
+			}
+			// finishConnect() waiting for connect() to finish:
+			// Java_sun_nio_ch_SocketChannelImpl_checkConnect throws the error, either from select() returning WSAEACCES
+			// or SO_ERROR being WSAEACCES. NET_ThrowNew adds on the "no further information".
+			else if (err instanceof ConnectException && err.getMessage().equals("Permission denied: no further information"))
+			{
+				message += " Your internet access is blocked. Firewall or antivirus software may have blocked the connection.";
+			}
+			else
+			{
+				message += " Please check your internet connection.";
+			}
+
+			new FatalErrorDialog(formatExceptionMessage(message, err))
 				.open();
 			return;
 		}
